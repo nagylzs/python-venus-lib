@@ -1,0 +1,570 @@
+# Translations template for PROJECT.
+# Copyright (C) 2015 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-11-03 18:37+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.1.1\n"
+"X-Generator: Poedit 1.8.6\n"
+
+#: ../db/dbo/connection.py:216
+msgid "must be in transaction!"
+msgstr ""
+
+#: ../db/dbo/connection.py:313
+#, python-format
+msgid "Invalid transaction level  (current=%d, to be commited=%d)"
+msgstr ""
+
+#: ../db/dbo/connection.py:347
+#, python-format
+msgid "Invalid transaction level  (current=%d, to be rolled back=%d)"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:101
+msgid "ConnectionPoolContextManager BEGIN"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:109
+msgid "ConnectionPoolContextManager ROLLBACK"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:113
+msgid "ConnectionPoolContextManager COMMIT"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:152
+msgid "borrow(): closing aged out connection"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:158
+msgid "Creating new connection"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:163
+msgid "DB API: threadsafety should be at least one! Two is highly recommended."
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:177
+msgid "giveback(): closing connection because cannot be shared between threads"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:183
+msgid "giveback(): closing aged out connection"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:188
+msgid "Giving back something that is not borrowed?"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:194
+msgid "connectionpool.collect() - START"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:203
+msgid "connectionpool.collect():  closing aged out connection"
+msgstr ""
+
+#: ../db/dbo/connectionpool.py:210
+msgid "connectionpool.collect() - END"
+msgstr ""
+
+#: ../db/dbo/cquery.py:123 ../db/dbo/query.py:106
+#, python-format
+msgid "no such field: \"%s\""
+msgstr ""
+
+#: ../db/dbo/adapter/sqlite.py:31
+msgid "You need 4.0 > sqlite_version >= 3.6.8."
+msgstr ""
+
+#: ../db/yasdl/ast.py:327
+#, python-format
+msgid " at line %d "
+msgstr ""
+
+#: ../db/yasdl/ast.py:404 ../db/yasdl/ast.py:476
+msgid "Cannot bind an empty name!"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:102
+msgid "Nothing can 'use' or 'require' itself."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:106
+msgid "Multiple use statements for the same source is not allowed."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:132
+msgid "Circular schema references are not allowed."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:164
+#, python-format
+msgid "Cannot have '.' in %s"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:171
+#, python-format
+msgid "'%s' is a reserved property name."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:175
+#, python-format
+msgid "'id' is an invalid name in %s"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:202 ../db/yasdl/compiler.py:210
+msgid "Duplicate definition."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:223
+#, python-format
+msgid "The name '%s' should belong to a property."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:231
+msgid "Cannot have 'abstract' and 'final' modifiers at the same time."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:248
+msgid "Fields can only be implemented by fields."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:252
+msgid "Fieldsets can only be implemented by fieldsets."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:275
+#, python-format
+msgid "Only dotted names can be used after '%s'."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:279
+#, python-format
+msgid "Cannot use imp_name '=%s' for %s."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:352 ../db/yasdl/compiler.py:851
+msgid ""
+"Absolute name used to access an object inside the same schema (instead of "
+"'schema.<name>')."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:372
+msgid "Can only use 'implements' inside fields and fieldsets."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:387
+#, python-format
+msgid "Definition %s not found (#1) "
+msgstr ""
+
+#: ../db/yasdl/compiler.py:391
+msgid "A field cannot implement a non-field."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:397
+msgid "A fieldset cannot implement a non-fieldset."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:403
+msgid "Nothing can explicitly implement itself."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:407
+msgid ""
+"Implementation cannot statically contain its specification. (implementation)"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:410
+msgid ""
+"Implementation cannot statically contain its specification. (specification)"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:414
+msgid ""
+"Specification cannot statically contain its implementation. (specification)"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:417
+msgid ""
+"Specification cannot statically contain its implementation. (implementation)"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:421
+#, python-format
+msgid "Definition %s not found (#2)."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:450
+#, python-format
+msgid "Circular reference for '%s' was detected "
+msgstr ""
+
+#: ../db/yasdl/compiler.py:505
+msgid "Multiple definitions want to implement this."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:507
+msgid "Multiple implementation."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:538
+msgid "Cannot explicitly implement a definition that has imp_name ancestor(s). "
+msgstr ""
+
+#: ../db/yasdl/compiler.py:563
+msgid "Abstract definition has no implementation defined "
+msgstr ""
+
+#: ../db/yasdl/compiler.py:567
+msgid "Trying to implement a final definition."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:590
+msgid "Definitions in the same implementation tree cannot contain each other."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:626
+msgid "Can only use 'ancestors' inside fields and fieldsets."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:640
+msgid "Fields can only be inherted from fields."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:643
+msgid "Fieldsets can only be inherited from fieldsets."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:658
+#, python-format
+msgid "Definition %s not found (#3) "
+msgstr ""
+
+#: ../db/yasdl/compiler.py:661
+msgid "A field cannot be the ancestor of a non-field."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:668
+#, python-format
+msgid "A fieldset %s cannot be the ancestor of a non-fieldset."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:675
+msgid "Nothing can be the ancestor of itself."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:678
+msgid "Descendant cannot statically contain its ancestor."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:682 ../db/yasdl/compiler.py:690
+msgid "decendant"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:683 ../db/yasdl/compiler.py:689
+msgid "ancestor"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:686
+msgid "Ancestor cannot statically contain its descendant."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:693
+#, python-format
+msgid "Definition %s not found (#4) "
+msgstr ""
+
+#: ../db/yasdl/compiler.py:715
+msgid "Definitions with imp_name ancestors cannot implement other definitions."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:773
+msgid "Definitions in the same inheritance graph cannot contain each other."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:791
+msgid "Useless use of name deletion."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:862
+msgid "The references property cannot have more than one argument."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:871
+msgid "Only fieldsets can be referenced."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:874
+#, python-format
+msgid "Argument of the references property must be a definition %s"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:891
+#, python-format
+msgid "Definition %s not found (#5)."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:898
+msgid "Trying to reference a non-outermost definition."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:901 ../db/yasdl/compiler.py:928
+msgid "referenced from"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:902 ../db/yasdl/compiler.py:929
+msgid "references to"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:909
+msgid "Index definition must specify its fields."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:913
+msgid "Index definition must have at least one field."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:919
+msgid "Arguments of the 'fields' property must be fields."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:924
+msgid "Trying to index on a field that is not contained the fieldset."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:982
+msgid ""
+"Final implementation of required outermost fieldset sould be outermost, but "
+"it is not."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:986 ../db/yasdl/compiler.py:1123
+msgid "specification"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:989
+msgid "implementation"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1048
+msgid ""
+"This abstract definition must be realized,  but it has no fallback "
+"implementation."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1070
+msgid "Required definition is not realized."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1074
+msgid "required"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1076
+msgid "specification of owner"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1078
+msgid "realization of owner"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1089
+msgid "Realized top level fieldsets must contain at least one field."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1101
+msgid "Realized non-toplevel fieldsets should contain at least one field."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1107
+msgid "Outermost field definitions should not be required - it is meaningless."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1115
+msgid ""
+"Top level realized fieldset definition should not have any specification that "
+"is not outermost."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1119
+msgid "May result in realizing copies of its contents."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1120
+msgid "Indicates bad design."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1124
+msgid "realization"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1134
+msgid "Type property must have a single string argument."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1139
+msgid "Referencing field must have 'identifier' type.."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1145
+msgid "Realized fields must have a type."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1154
+msgid "'size' property must have a single integer argument."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1164
+msgid "'precision' property must have a single integer argument."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1171
+msgid "'notnull' property can only be used inside field definitions."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1179
+msgid "'notnull' property must have a single boolean argument."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1186
+msgid "'unique' property can only be used inside index definitions."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1194
+msgid "'unique' property must have a single boolean argument."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1201
+msgid "'ondelete' property can only be used inside field definitions."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1205
+msgid "'onupdate' property can only be used inside field definitions."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1214
+msgid ""
+"Argument of 'ondelete' property must be in ['cascade','setnull','noaction']"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1222
+msgid ""
+"Argument of 'onupdate' property must be in ['cascade','setnull','noaction']"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1226
+msgid ""
+"Index is part of a realized final implementation, so it should be created, "
+"but its field is not realized."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1238
+msgid "table"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1239
+msgid "index"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1240
+msgid "field"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1243
+msgid "The 'language' property is not defined for this schema, assuming 'en'."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1254
+msgid "The language property can only be defined at schema level."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1260
+msgid "The cluster property can only be defined at fieldset level."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1266
+msgid "The cluster property can only have zero or one argument."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1274
+msgid ""
+"The cluster property's argument must be an index that is defined on the same "
+"level"
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1286
+#, python-format
+msgid "Type '%s' is not supported by this diver."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1292
+#, python-format
+msgid "Field of type '%s' must have a size given."
+msgstr ""
+
+#: ../db/yasdl/compiler.py:1295
+#, python-format
+msgid "Field of type '%s'  must have a precision given."
+msgstr ""
+
+#: ../db/yasdl/lex.py:158
+#, python-format
+msgid "Illegal character: %s"
+msgstr ""
+
+#: ../db/yasdl/parser.py:45
+#, python-format
+msgid "fpaths parameter of YASDLParser.parse must be a list, not %s"
+msgstr ""
+
+#: ../db/yasdl/parser.py:52
+msgid "Parser exited with errors."
+msgstr ""
+
+#: ../db/yasdl/parser.py:96
+#, python-format
+msgid " for %s"
+msgstr ""
+
+#: ../db/yasdl/parser.py:160
+#, python-format
+msgid "Schema %s cannot be located."
+msgstr ""
+
+#: ../db/yasdl/parser.py:195
+#, python-format
+msgid "Invalid fpath to import (%s)."
+msgstr ""
+
+#: ../db/yasdl/parser.py:196
+msgid "Must be an URI or a .yasdl file path."
+msgstr ""
+
+#: ../db/yasdl/parser.py:279
+#, python-format
+msgid "Error: duplicate package name %s:"
+msgstr ""
+
+#: ../db/yasdl/yacc.py:484
+msgid "Syntax error"
+msgstr ""
+
+#: ../misc/observable.py:187 ../misc/observable.py:193 ../misc/observable.py:227
+#: ../misc/observable.py:233
+#, python-format
+msgid "Observer has no %s method."
+msgstr ""

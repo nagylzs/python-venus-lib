@@ -1,0 +1,64 @@
+schema venus.core {
+    use venus.types as types;
+    language "en";
+    guid "9050964e-89b4-4825-8dee-014a6460b116";
+    displaylabel "Core schema for venus/yasdl";
+
+    abstract fieldset uniref {
+        displaylabel "Universal reference type";
+        required field tbl -> r_table {
+            displaylabel "Target table of the universal reference.";
+        }
+        required field row {
+            type "identifier";
+            displaylabel "Target row of the universal reference.";
+        }
+    }
+
+    abstract fieldset yasdl_item {
+        displaylabel "Common fields to YASDL items.";
+        required field name : types.name {
+            displaylabel "Name";
+        }
+        required field namepath : types.name {
+            displaylabel "Full dotted name";
+        }
+        required field pname : types.name {
+            displaylabel "Physical name of the realization";
+        }
+        required field src  : types.sourcecode {
+            displaylabel "YASDL source code";
+        }
+        required field lineno : types.notnullint {
+            displaylabel "Line number of this item in the source code";
+        }
+        required field colno  : types.notnullint {
+            displaylabel "Column number of this item in the source code";
+        }
+        index idx_name { fields name; }
+        index idx_namepath { fields namepath; }
+        index idx_pname { fields pname; }
+    }
+
+    #
+    # Meta tables storing realized definitions of this instance.
+    #
+    final required fieldset r_schema : yasdl_item {
+        guid "257f9bc8-2fdc-4c51-a5ea-682e81edee38";
+        displaylabel "Schema of this database instance";
+        required field idx : types.notnullint {
+            displaylabel "Index of this schema in the compilation.";
+        }
+        index uidx_r_schema_idx {
+            fields idx;
+            unique true;
+        }
+    }
+
+    final required fieldset r_table : yasdl_item {
+        guid "70fdd9d9-c223-48f3-9bc2-dcba5e29152c";
+        displaylabel "Table of this database instance";
+        required field r_schema : types.owner -> r_schema;
+    }
+
+}

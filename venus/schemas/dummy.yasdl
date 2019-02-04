@@ -1,0 +1,9 @@
+
+schema dummy {
+    use venus.types as types;
+    use venus.core as core;
+
+
+    language "en";
+    description "Dummy test package that uses all built-in schemas.";
+}

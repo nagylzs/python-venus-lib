@@ -1,0 +1,115 @@
+schema venus.yaaf.security {
+    language "en";
+    label "Security";
+    longlabel "Security schema for YAAF";
+
+    required fieldset user {
+        label "User";
+        longlabel "User of the application";
+        required field login {
+            type "text";
+            label "Login";
+            longlabel "Login name";
+            reqlevel "required";
+            notnull true;
+        }
+        required field email {
+            type "text";
+            label "Email";
+        }
+        # TODO: add real name and profile image here?
+        index uidx_login {
+            unique true;
+            fields login;
+        }
+    }
+
+    required fieldset group {
+        label "Group";
+        longlabel "Group of application users";
+        required field name {
+            type "text";
+            label "Name";
+            longlabel "Group name";
+            reqlevel "required";
+            notnull true;
+        }
+        # TODO: add creator/owner here?
+        index uidx_name {
+            unique true;
+            fields name;
+        }
+    }
+
+    required fieldset membership {
+        label "Group membership";
+        required field user -> user {
+            reqlevel "required";
+            notnull true;
+        }
+        required field group -> group {
+            reqlevel "required";
+            notnull true;
+        }
+        index uidx_user_group {
+            unique true;
+            fields user group;
+        }
+    }
+
+    abstract fieldset nameditem {
+        label "Named item";
+        required field name  {
+            type "text";
+            label "Name";
+            longlabel "Name";
+            reqlevel "required";
+            notnull true;
+        }
+        index uidx_name {
+            fields name;
+            unique true;
+        }
+    }
+
+    # Subject of permission is the thing you want to protect.
+    required fieldset subject : nameditem {
+        label "Subject";
+        longlabel "Subject of the permission.";
+    }
+
+    # Action is what you want to protect with the subject.
+    required fieldset action : nameditem {
+        label "Action";
+    }
+
+    # Permission tells if somebody can do a given action with a subject.
+    required fieldset permission {
+        label "Permission";
+        required field subject -> subject {
+            reqlevel "required";
+            notnull true;
+            ondelete "cascade";
+        }
+        required field action -> action {
+            reqlevel "required";
+            notnull true;
+            ondelete "cascade";
+        }
+        required field user -> user {
+            ondelete "cascade";
+        }
+        required field group -> group {
+            ondelete "cascade";
+        }
+        index uidx_permission_user {
+            fields subject action user;
+            unique true;
+        }
+        index uidx_permission_group {
+            fields subject action group;
+            unique true;
+        }
+    }
+
+}

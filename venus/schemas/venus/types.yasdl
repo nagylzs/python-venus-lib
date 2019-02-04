@@ -1,0 +1,31 @@
+#
+# This schema contains all abstract types that are used for the built-in
+# schemas of the venus package.
+#
+#
+schema venus.types {
+    language "en";
+    guid "562e3e82-9108-44ab-a340-f0313278466c";
+    displaylabel "Abstract field types and fieldsets.";
+
+    abstract field name {
+        type "text";
+        label "Name";
+    }
+
+    abstract field sourcecode {
+        type "text";
+        label "Source code";
+    }
+
+    abstract field owner {
+        requirelevel "mandatory";
+        on_delete "cascade";
+    }
+
+    abstract field notnullint {
+        type "integer";
+        requirelevel "mandatory";
+    }
+
+}
