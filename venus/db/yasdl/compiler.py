@@ -147,7 +147,7 @@ class Compiler:
                 attrvalue = getattr(obj, attrname)
                 if "." in attrvalue:
                     self.append_error(obj, _("Cannot have '.' in %s") % label,
-                                     "01031")
+                                      "01031")
                 for word in list(lex.reserved.keys()) + lex.RESERVED_PROPERTY_NAMES:
                     if word == attrvalue:
                         if not isinstance(obj, ast.YASDLProperty) or \
@@ -158,7 +158,7 @@ class Compiler:
                 if attrvalue == "id":
                     self.append_error(obj,
                                       _("'id' is an invalid name in %s") % label,
-                                     "01033")
+                                      "01033")
 
         if isinstance(obj, ast.YASDLItem):
             _chk("name", "name")
@@ -330,8 +330,8 @@ class Compiler:
                     if path:
                         self.append_warning(obj,
                                             _("Absolute name used to access an object " +
-                                             "inside the same schema (instead of " +
-                                             "'schema.<name>')."), "99011")
+                                              "inside the same schema (instead of " +
+                                              "'schema.<name>')."), "99011")
                         path.insert(0, schema)
                         return path
 
@@ -350,7 +350,7 @@ class Compiler:
             pifs = isinstance(obj.owner, ast.YASDLFieldSet)
             if not pif and not pifs:
                 self.append_error(obj, _("Can only use 'implements' " +
-                                        "inside fields and fieldsets."), "01081")
+                                         "inside fields and fieldsets."), "01081")
                 return
             for name in obj.items:
                 if isinstance(name, ast.dotted_name):
@@ -365,7 +365,7 @@ class Compiler:
                     if o is None:
                         self.append_error(obj,
                                           _("Definition %s not found (#1) ") % name,
-                                         "01082")
+                                          "01082")
                     # Should not happen because of min_classes.
                     elif pif and not isinstance(o, ast.YASDLField):
                         msg = _("A field cannot implement a non-field.")
@@ -381,21 +381,21 @@ class Compiler:
                     elif o is obj.owner:
                         self.append_error(obj,
                                           _("Nothing can explicitly implement itself."),
-                                         "01085")
+                                          "01085")
                     elif o.owns(obj):
                         self.append_error(obj,
                                           _("Implementation cannot statically contain " +
-                                           "its specification. (implementation)"), "01086")
+                                            "its specification. (implementation)"), "01086")
                         self.append_error(o,
                                           _("Implementation cannot statically contain " +
-                                           "its specification. (specification)"), "01086")
+                                            "its specification. (specification)"), "01086")
                     elif (obj.owns(o)):
                         self.append_error(o,
                                           _("Specification cannot statically contain " +
-                                           "its implementation. (specification)"), "01087")
+                                            "its implementation. (specification)"), "01087")
                         self.append_error(obj,
                                           _("Specification cannot statically contain " +
-                                           "its implementation. (implementation)"), "01087")
+                                            "its implementation. (implementation)"), "01087")
                 else:
                     self.append_error(obj,
                                       _("Definition %s not found (#2).") % name, "01088")
@@ -450,50 +450,33 @@ class Compiler:
             if not self._check_circular(obj, 'implements', "01091"):
                 break
 
-    def _get_all_implementors(self, what, obj=None):
-        """Return a list of defs that list obj after 'implements'.
-
-        :param what: Look for implementors of this.
-        :param obj: Examine this object and its subtree.
-        :return:  Actually the ``implements`` properties of the definitions are returned instead of the definitions.
-            This makes debugging easier.
-        """
-        res = []
-        if obj is None:
-            for src, schema in self.schemas.items():
-                res += self._get_all_implementors(what, schema)
-        elif isinstance(obj, ast.YASDLItem):
-            # No need for min_classes here, because we'll check for identity.
-            implements = obj.bind_static('implements', recursive=False)
-            if implements:
-                is_lister = False
-                for item in implements.items:
-                    if item.ref is what:
-                        is_lister = True
-                        break
-                if is_lister:
-                    res.append(implements)
-            for item in obj.items:
-                res += self._get_all_implementors(what, item)
-        return res
-
-    def _check_multiple_implementors(self, obj):
-        allimp = self._get_all_implementors(obj)
-        if len(allimp) > 1:
-            self.append_error(obj,
-                              _("Multiple definitions want to implement this."), "02011")
-            for idx, item in enumerate(allimp):
-                self.append_error(item, _("Multiple implementation."), "02011")
-
-        elif len(allimp) == 1:
-            obj.direct_implementor = allimp[0].owner
-        else:
-            obj.direct_implementor = None
-
     def _phase2_step1(self):
         """No multiple implementations."""
+        # Setup a cache for all implementors
         for obj in self.iterate([ast.YASDLField, ast.YASDLFieldSet]):
-            self._check_multiple_implementors(obj)
+            obj._all_implementors = set([])
+        # Create backreferences for all implementors
+        for obj in self.iterate([ast.YASDLField, ast.YASDLFieldSet]):
+            implements = obj.bind_static('implements', recursive=False)
+            if implements:
+                for item in implements.items:
+                    item.ref._all_implementors.add(obj)
+        # Now, check for multiple implementors
+        for obj in self.iterate([ast.YASDLField, ast.YASDLFieldSet]):
+            all_imps = obj._all_implementors
+            if len(all_imps) > 1:
+                self.append_error(obj,
+                                  _("Multiple definitions want to implement this."), "02011")
+                for idx, item in enumerate(all_imps):
+                    self.append_error(item, _("Multiple implementation."), "02011")
+
+            elif len(all_imps) == 1:
+                obj.direct_implementor = all_imps[0].owner
+            else:
+                obj.direct_implementor = None
+        # Clean up the mess
+        for obj in self.iterate([ast.YASDLField, ast.YASDLFieldSet]):
+            del obj._all_implementors
 
     def _has_imp_ancestor(self, obj):
         """Tells if obj has an imp_name listed in its ancestors.
@@ -516,7 +499,7 @@ class Compiler:
                 if self._has_imp_ancestor(obj):
                     self.append_error(obj,
                                       _("Cannot explicitly implement a definition " +
-                                       "that has imp_name ancestor(s). "), "02021")
+                                        "that has imp_name ancestor(s). "), "02021")
 
     def set_final_implementation_of(self, obj):
         """Find final implementation of a definition.
@@ -549,7 +532,7 @@ class Compiler:
                     ('required' in obj.modifiers):
                 self.append_error(obj,
                                   _("Abstract definition has no implementation defined "),
-                                 "02041")
+                                  "02041")
             if (obj.final_implementor != obj) and \
                     ('final' in obj.modifiers):
                 msg = _("Trying to implement a final definition.")
@@ -612,7 +595,7 @@ class Compiler:
             if not pif and not pifs:
                 self.append_error(obj,
                                   _("Can only use 'ancestors' inside fields and fieldsets."),
-                                 "03011")
+                                  "03011")
                 return
 
             good_min_classes = {obj.owner.__class__}
@@ -626,10 +609,10 @@ class Compiler:
                         if isinstance(obj.owner, ast.YASDLField):
                             self.append_error(obj,
                                               _("Fields can only be inherted from fields."),
-                                             "03012")
+                                              "03012")
                         else:
                             self.append_error(obj, _("Fieldsets can only " +
-                                                    "be inherited from fieldsets."), "03012")
+                                                     "be inherited from fieldsets."), "03012")
                         continue
 
                     path = self._bindpath_static(obj, name, recursive=True,
@@ -661,7 +644,7 @@ class Compiler:
                     elif o is obj.owner:
                         self.append_error(obj,
                                           _("Nothing can be the ancestor of itself."),
-                                         "03016")
+                                          "03016")
                     elif o.owns(obj):
                         msg = _("Descendant cannot statically contain " +
                                 "its ancestor.")
@@ -701,14 +684,13 @@ class Compiler:
                 if self._has_imp_ancestor(obj):
                     self.append_error(obj,
                                       _("Definitions with imp_name ancestors cannot " +
-                                       "implement other definitions."), "03031")
+                                        "implement other definitions."), "03031")
 
     def _phase3_step4(self):
         """Calculate all ancestors and descendants."""
         # First we determine inheritance graphs. This is very tricky, indeed!
         # Calculate all ancestors in the right order.
-        defiter = functools.partial(self.iterate,
-                                    [ast.YASDLField, ast.YASDLFieldSet])
+        defiter = functools.partial(self.iterate, [ast.YASDLField, ast.YASDLFieldSet])
         for obj in defiter():
             # obj.ancestors = []
             # No need to check for min_classes because "ancestors"
@@ -718,21 +700,16 @@ class Compiler:
                 for item in prop_ancestors.items:
                     if item.imp:
                         obj.ancestors.append(item.ref.final_implementor)
+                        item.ref.final_implementor.descendants.add(obj)
                     else:
                         obj.ancestors.append(item.ref)
-        # Calculate all descendants.
-        for ancestor in defiter():
-            ancestor.descendants = set([])
-            for descendant in defiter():
-                if ancestor in descendant.ancestors:
-                    ancestor.descendants.add(descendant)
+                        item.ref.descendants.add(obj)
 
     def _phase3_step5(self):
         """Within one inheritance graph, no def can contain another def."""
         # We need to classify definitions into graphs.
         # This is very tricky indeed!
-        alldefs = set([obj for obj in self.iterate(
-            [ast.YASDLField, ast.YASDLFieldSet])])
+        alldefs = set([obj for obj in self.iterate([ast.YASDLField, ast.YASDLFieldSet])])
         graphs = []
         while alldefs:
             item = alldefs.pop()  # Get one element
@@ -837,8 +814,8 @@ class Compiler:
                     if path:
                         self.append_warning(obj,
                                             _("Absolute name used to access an object " +
-                                             "inside the same schema (instead of " +
-                                             "'schema.<name>')."), "99012")
+                                              "inside the same schema (instead of " +
+                                              "'schema.<name>')."), "99012")
                         path.insert(0, schema)
                         return path
 
@@ -848,7 +825,7 @@ class Compiler:
         if isinstance(obj, ast.YASDLProperty) and (obj.name == "references"):
             if len(obj.items) > 1:
                 self.append_error(obj, _("The references property cannot " +
-                                        "have more than one argument."), "04011")
+                                         "have more than one argument."), "04011")
             elif len(obj.items) == 1:
                 name = obj.items[0]
                 if isinstance(name, ast.dotted_name):
@@ -860,7 +837,7 @@ class Compiler:
                 else:
                     self.append_error(obj,
                                       _("Argument of the references property must be " +
-                                       "a definition."), "04013")
+                                        "a definition."), "04013")
             else:
                 pass  # elif len(obj.items)==0: -- remove reference to fieldset
 
@@ -900,14 +877,14 @@ class Compiler:
             if not fields.items:
                 self.append_error(obj,
                                   _("Index definition must have at least one field."),
-                                 "04042")
+                                  "04042")
                 return
             for item in fields.items:
                 if not isinstance(item, ast.dotted_name) or (
-                            not isinstance(item.ref, ast.YASDLField) and
-                            not isinstance(item.ref, ast.YASDLFieldSet)):
+                        not isinstance(item.ref, ast.YASDLField) and
+                        not isinstance(item.ref, ast.YASDLFieldSet)):
                     self.append_error(fields, _("Arguments of the " +
-                                               "'fields' property must be fields or fieldsets."), "04043")
+                                                "'fields' property must be fields or fieldsets."), "04043")
                     return
             for item in fields.items:
                 if not obj.owner.contains(item.ref):
@@ -932,7 +909,6 @@ class Compiler:
                 else:
                     fset.add(item.ref)
 
-
     def _phase4_step5(self, obj):
         if isinstance(obj, ast.YASDLConstraint):
             check = obj.get_check()
@@ -947,14 +923,14 @@ class Compiler:
                 if isinstance(item, ast.dotted_name):
                     if not isinstance(item.ref, ast.YASDLField):
                         self.append_error(check, _("Arguments of the " +
-                                               "'check' property must be strings or fields."), "04053")
+                                                   "'check' property must be strings or fields."), "04053")
                     return
             for item in check.items:
                 if isinstance(item, ast.dotted_name):
                     if not obj.owner.contains(item.ref):
                         self.append_error(check,
                                           _("Trying to use a field in a check constraint " +
-                                          "that is not contained by the fieldset"), "04054")
+                                            "that is not contained by the fieldset"), "04054")
                     return
 
     def _phase5_step1_and_step2_and_step3(self):
@@ -1119,7 +1095,7 @@ class Compiler:
                     break
             if not has_field:
                 self.append_error(obj, _("Realized top level fieldsets " +
-                                        "must contain at least one field."), "07011")
+                                         "must contain at least one field."), "07011")
 
     def _phase7_step2(self, obj):
         if isinstance(obj, ast.YASDLFieldSet) and obj.realized and \
@@ -1131,13 +1107,13 @@ class Compiler:
                     break
             if not has_field:
                 self.append_warning(obj, _("Realized non-toplevel " +
-                                          "fieldsets should contain at least one field."), "07021")
+                                           "fieldsets should contain at least one field."), "07021")
 
     def _phase7_step3(self, obj):
         if isinstance(obj, ast.YASDLField) and obj.is_outermost():
             if "required" in obj.modifiers:
                 self.append_warning(obj, _("Outermost field definitions " +
-                                          "should not be required - it is meaningless."), "07031")
+                                           "should not be required - it is meaningless."), "07031")
 
     def _phase7_step4(self, obj):
         if isinstance(obj, ast.YASDLFieldSet) and \
@@ -1162,12 +1138,12 @@ class Compiler:
                 if len(typ.items) != 1 or not isinstance(typ.items[0], str):
                     self.append_error(obj,
                                       _("Type property must have a " +
-                                       "single string argument, or no argument at all."), "07051")
+                                        "single string argument, or no argument at all."), "07051")
 
                 if has_ref and typ.items and typ.items[0] != "identifier":
                     self.append_error(obj,
                                       _("Referencing field must have " +
-                                       "'identifier' type."), "07052")
+                                        "'identifier' type."), "07052")
 
             if obj.realized:
                 if not obj.get_type():
@@ -1181,7 +1157,7 @@ class Compiler:
                 if len(size.items) != 1 or not isinstance(size.items[0], int):
                     self.append_error(size,
                                       _("'size' property must have " +
-                                       "a single integer argument."), "07061")
+                                        "a single integer argument."), "07061")
 
     def _phase7_step7(self, obj):
         if isinstance(obj, ast.YASDLField):
@@ -1191,14 +1167,14 @@ class Compiler:
                         not isinstance(precision.items[0], int):
                     self.append_error(precision,
                                       _("'precision' property must have " +
-                                       "a single integer argument."), "07071")
+                                        "a single integer argument."), "07071")
 
     def _phase7_step8(self, obj):
         if not isinstance(obj, ast.YASDLField):
             if obj.has_member("notnull"):
                 self.append_error(obj["notnull"],
                                   _("'notnull' property can only be used " +
-                                   "inside field definitions."), "07081")
+                                    "inside field definitions."), "07081")
         else:
             if obj.has_member("notnull"):
                 notnull = obj["notnull"]
@@ -1206,14 +1182,14 @@ class Compiler:
                         not isinstance(notnull.items[0], bool):
                     self.append_error(notnull,
                                       _("'notnull' property must have " +
-                                       "a single boolean argument."), "07082")
+                                        "a single boolean argument."), "07082")
 
     def _phase7_step9(self, obj):
         if not isinstance(obj, ast.YASDLIndex):
             if obj.has_member("unique"):
                 self.append_error(obj["unique"],
                                   _("'unique' property can only be used " +
-                                   "inside index definitions."), "07091")
+                                    "inside index definitions."), "07091")
         else:
             if obj.has_member("unique"):
                 unique = obj["unique"]
@@ -1221,14 +1197,14 @@ class Compiler:
                         not isinstance(unique.items[0], bool):
                     self.append_error(unique,
                                       _("'unique' property must have " +
-                                       "a single boolean argument."), "07092")
+                                        "a single boolean argument."), "07092")
 
     def _phase7_step10(self, obj):
         if not isinstance(obj, ast.YASDLField):
             if obj.has_member("immutable"):
                 self.append_error(obj["immutable"],
                                   _("'immutable' property can only be used " +
-                                   "inside field definitions."), "07101")
+                                    "inside field definitions."), "07101")
         else:
             if obj.has_member("immutable"):
                 immutable = obj["immutable"]
@@ -1236,7 +1212,7 @@ class Compiler:
                         not isinstance(immutable.items[0], bool):
                     self.append_error(immutable,
                                       _("'immutable' property must have " +
-                                       "a single boolean argument."), "07102")
+                                        "a single boolean argument."), "07102")
 
     def _phase7_step11(self, obj):
         if obj.has_member("guid"):
@@ -1245,7 +1221,7 @@ class Compiler:
                     not isinstance(guid.items[0], str):
                 self.append_error(guid,
                                   _("'guid' property must have " +
-                                   "a single non-empty string argument."), "07111")
+                                    "a single non-empty string argument."), "07111")
             else:
                 if guid in self.parsed.all_guids:
                     self.append_error(obj,
@@ -1257,17 +1233,16 @@ class Compiler:
                 else:
                     self.parsed.all_guids[guid.items[0]] = obj
 
-
     def _phase7_step12(self, obj):
         if not isinstance(obj, ast.YASDLField):
             if obj.has_member("ondelete"):
                 self.append_error(obj["ondelete"],
                                   _("'ondelete' property can only be used " +
-                                   "inside field definitions."), "07121")
+                                    "inside field definitions."), "07121")
             if obj.has_member("onupdate"):
                 self.append_error(obj["onupdate"],
                                   _("'onupdate' property can only be used " +
-                                   "inside field definitions."), "07122")
+                                    "inside field definitions."), "07122")
         else:
             if obj.has_member("ondelete"):
                 ondelete = obj["ondelete"]
@@ -1276,7 +1251,7 @@ class Compiler:
                         (ondelete.items[0] not in ["cascade", "setnull", "noaction"]):
                     self.append_error(ondelete,
                                       _("Argument of 'ondelete' property must be in " +
-                                       "['cascade','setnull','noaction']"), "07123")
+                                        "['cascade','setnull','noaction']"), "07123")
             if obj.has_member("onupdate"):
                 onupdate = obj["onupdate"]
                 if len(onupdate.items) != 1 or \
@@ -1284,7 +1259,7 @@ class Compiler:
                         (onupdate.items[0] not in ["cascade", "setnull", "noaction"]):
                     self.append_error(onupdate,
                                       _("Argument of 'onupdate' property must be in " +
-                                       "['cascade','setnull','noaction']"), "07123")
+                                        "['cascade','setnull','noaction']"), "07123")
 
     def _phase7_step13(self, obj):
         msg = _("Index is part of a realized final implementation, " +
@@ -1316,28 +1291,28 @@ class Compiler:
         if isinstance(obj, ast.YASDLProperty) and obj.name == "language":
             if not isinstance(obj.owner, ast.YASDLSchema):
                 self.append_error(obj, _("The language property can " +
-                                        "only be defined at schema level."), "07151")
+                                         "only be defined at schema level."), "07151")
 
     def _phase7_step16(self, obj):
         if isinstance(obj, ast.YASDLProperty) and obj.name == "cluster":
             if not isinstance(obj.owner, ast.YASDLFieldSet):
                 self.append_error(obj, _("The cluster property can " +
-                                        "only be defined at fieldset level."), "07161")
+                                         "only be defined at fieldset level."), "07161")
             elif len(obj.items) == 0:
                 # No clustering
                 pass
             elif len(obj.items) > 1:
                 self.append_error(obj, _("The cluster property " +
-                                        "can only have zero or one argument."), "07162")
+                                         "can only have zero or one argument."), "07162")
             else:
                 item = obj.items[0]
                 if not isinstance(item, ast.dotted_name) or \
                         not isinstance(item.ref, ast.YASDLIndex) or \
-                                item.ref.owner.final_implementor \
-                                is not obj.owner.final_implementor:
+                        item.ref.owner.final_implementor \
+                        is not obj.owner.final_implementor:
                     self.append_error(obj, _("The cluster property's " +
-                                            "argument must be an index that is defined on the " +
-                                            "same level"), "07163")
+                                             "argument must be an index that is defined on the " +
+                                             "same level"), "07163")
 
     def _phase7_step17(self, obj):
         if isinstance(obj, ast.YASDLProperty) and obj.name == "reqlevel":
@@ -1346,10 +1321,10 @@ class Compiler:
                     not isinstance(reqlevel.items[0], str) or \
                     (reqlevel.items[0] not in ["required", "desired", "optional"]):
                 self.append_notice(reqlevel,
-                                  _("Argument of 'reqlevel' property shoud be in " +
-                                    "['required', 'desired', 'optional']"), "07171")
+                                   _("Argument of 'reqlevel' property shoud be in " +
+                                     "['required', 'desired', 'optional']"), "07171")
             else:
-                if (reqlevel.items[0]=="required") and not obj.owner.get_singleprop("notnull", False):
+                if (reqlevel.items[0] == "required") and not obj.owner.get_singleprop("notnull", False):
                     self.append_notice(reqlevel,
                                        _("Required fields should also be 'notnull true'."), "07172")
 
@@ -1397,13 +1372,13 @@ class Compiler:
             except KeyError:
                 self.append_error(obj["type"],
                                   _("Type '%s' is not supported by this diver.") % typ,
-                                 "08011")
+                                  "08011")
                 return
 
             if typeinfo["need_size"] and obj.get_size() is None:
                 self.append_error(obj,
                                   _("Field of type '%s' must have a size given.") % typ,
-                                 "08012")
+                                  "08012")
             if typeinfo["need_precision"] and obj.get_precision() is None:
                 self.append_error(obj, _("Field of type '%s' must have a precision given.") % typ, "08013")
 
@@ -1422,7 +1397,7 @@ class Compiler:
         # Phase 1 - general semantic check.
         self._phase1_step1()
 
-        #self._phase1_step2() # 2017-12-13 - we allow circular references, from now on.
+        # self._phase1_step2() # 2017-12-13 - we allow circular references, from now on.
 
         for step in range(6):
             phase_method = getattr(self, '_phase1_step' + str(step + 3))

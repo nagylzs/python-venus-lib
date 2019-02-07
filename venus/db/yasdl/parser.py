@@ -320,6 +320,10 @@ class YASDLParseResult:
         for schema in list(self.schemas.values()):
             schema.setup_owners()
 
+        # Setup cache for static binding
+        for schema in list(self.schemas.values()):
+            schema._cache_static_names()
+
         return self.errorcount == 0
 
     def parse_file(self, filepath, search_path=None):

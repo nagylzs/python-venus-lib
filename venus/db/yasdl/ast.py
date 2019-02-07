@@ -110,8 +110,11 @@ class YASDLItem:
         # These below will be set later by the compiler
         self.modifiers = []
         self.ancestors = []
+        self.descendants = set([])
         self.specifications = set([])
         self.implementations = set([])
+        # This will be set by _cache_static_names() later.
+        self._snc = {}
         # These will be set by _cache_members() later.
         self._mbn, self.members = {}, []
         self._members_cached = False
@@ -398,6 +401,15 @@ class YASDLItem:
         """Tells if the definition is outermost (defined at schema level)."""
         return isinstance(self.owner, YASDLSchema)
 
+    def _cache_static_names(self):
+        """Create a cache of statically bound local names."""
+        self._snc.clear()
+        for item in self.items:
+            if isinstance(item, YASDLItem):
+                if hasattr(item, 'name'):
+                    self._snc[item.name] = item
+                item._cache_static_names()
+
     def bind_static(self, name, min_classes=None, recursive=True,
                     excludes=None):
         """Bind a name to an object statically.
@@ -453,19 +465,24 @@ class YASDLItem:
         if isinstance(name, str):
             name = name.split(".")
         firstname = name[0]
-        for item in self.items:
-            if hasattr(item, 'name') and (item.name == firstname):
-                if len(name) == 1:
-                    if is_minclass(item, min_classes):
-                        if item not in excludes:
-                            return [item]
-                else:
-                    head = item
-                    res = head.bindpath_static(name[1:], min_classes,
-                                               False, excludes)
-                    if res:
-                        res.insert(0, head)
-                        return res
+
+        # This has been superseded by the static name cache self._snc
+        # for item in self.items:
+        #    if hasattr(item, 'name') and (item.name == firstname):
+
+        if firstname in self._snc:
+            item = self._snc[firstname]
+            if len(name) == 1:
+                if is_minclass(item, min_classes):
+                    if item not in excludes:
+                        return [item]
+            else:
+                head = item
+                res = head.bindpath_static(name[1:], min_classes, False, excludes)
+                if res:
+                    res.insert(0, head)
+                    return res
+
         if recursive and self.owner:
             return self.owner.bindpath_static(name, min_classes, True, excludes)
         else:
