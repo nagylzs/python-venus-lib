@@ -622,14 +622,6 @@ class YASDLInstance:
                 if old_schema.getpath() != new_schema.getpath():
                     raise Exception("Moving tables between schemas is not supported. (Not even in SQL anyway...)")
 
-                # Field paths in the old table, keyed by physical name
-                old_fields_by_pname = {}
-                for fieldpath in old_table.itercontained([ast.YASDLField]):
-                    field = fieldpath[-1]
-                    if field.realized:
-                        pname = table_diff.old_instance.get_field_pname(old_table, fieldpath)
-                        old_fields_by_pname[pname] = fieldpath
-
                 # Field paths in the new table, keyed by physical name
                 new_fields_by_pname = {}
                 field_pname_order = []
@@ -639,6 +631,16 @@ class YASDLInstance:
                         pname = table_diff.new_instance.get_field_pname(new_table, fieldpath)
                         new_fields_by_pname[pname] = fieldpath
                         field_pname_order.append(pname)
+
+                # Field paths in the old table, keyed by physical name
+                old_fields_by_pname = {}
+                for fieldpath in old_table.itercontained([ast.YASDLField]):
+                    field = fieldpath[-1]
+                    if field.realized:
+                        pname = table_diff.old_instance.get_field_pname(old_table, fieldpath)
+                        old_fields_by_pname[pname] = fieldpath
+                        if pname not in field_pname_order:
+                            field_pname_order.append(pname)
 
                 # All physical field names in old and new tables
                 old_field_pnames = set(old_fields_by_pname.keys())
