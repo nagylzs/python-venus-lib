@@ -930,8 +930,12 @@ class Connection:
         tname = instance.get_table_pname(table)
         cname = instance.get_field_pname(table, fieldpath)
         if self.column_exists(sname, tname, cname):
-            sqlproc.addbuffer(
-                'ALTER TABLE "%s"."%s" DROP COLUMN "%s"' % (sname, tname, cname))
+            if options["force"]:
+                sqlproc.addbuffer(
+                    'ALTER TABLE "%s"."%s" DROP COLUMN "%s" CASCADE' % (sname, tname, cname))
+            else:
+                sqlproc.addbuffer(
+                    'ALTER TABLE "%s"."%s" DROP COLUMN "%s"' % (sname, tname, cname))
             sqlproc.processbuffer(options["ignore_exceptions"])
 
     def yasdl_drop_table_triggers(self, instance, schema, table, sqlproc, options):
