@@ -493,8 +493,9 @@ class YASDLParseResult:
 
         return None
 
-    def get_schema(self, fullname):
+    def get_schema(self, fullname) -> ast.YASDLSchema:
         """Get a schema by its full name."""
+        # TODO: put this into a dict to avoid linear search
         if not isinstance(fullname, ast.dotted_name):
             fullname = ast.dotted_name(fullname)
         for src in self.schemas:

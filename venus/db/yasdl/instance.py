@@ -1,5 +1,6 @@
 """Create database instance from compiled YASDL schema set."""
-from typing import Set, Dict, List, NamedTuple, Union
+from typing import Set, Dict, List, NamedTuple
+import base64
 
 from venus.db.dbo.connectionpool import ConnectionPool
 from venus.db.yasdl import ast
@@ -9,7 +10,8 @@ import venus.i18n
 
 _ = venus.i18n.get_my_translator(__file__)
 
-IGNORE_VENUS = True  # TODO: this is a hack, remove!
+IGNORE_VENUS = False  # TODO: this is a hack, remove!
+PARSED_SCHEMA_KEY = "parsed_schema"
 
 
 class NotRealizedError(KeyError):
@@ -1139,11 +1141,48 @@ class YASDLInstance:
         By saving the whole parse result into the database instance, it will contain
         its own defitions. It makes auto-upgrading easier.
         """
-        raise NotImplementedError  # TODO: save it in the venus_core schema!
+        parsed_schema_value = base64.b64encode(self.parsed.dumps()).decode('ascii')
+        # TODO: make this easier! Should be a method of the instance!
+        venus_core = self.parsed.get_schema("venus.core")
+        sys_parameter = venus_core.bind("sys_parameter")
+        sname = self.get_schema_pname(sys_parameter.owner_schema)
+        tname = self.get_table_pname(sys_parameter)
+        fullname = '"%s"."%s"' % (sname, tname)
 
-    @classmethod
-    def load_parsed(cls, connectionpool: ConnectionPool) -> YASDLParseResult:
+        with self.cpool.opentrans() as conn:
+            sys_parameter_id = conn.getqueryvalue(
+                "select id from "+fullname+" where param_key=%s", [PARSED_SCHEMA_KEY])
+            if sys_parameter_id is None:
+                conn.execsql(
+                    "insert into "+fullname+"(id,param_key, param_value, description) values ("
+                    "nextval('sys.id_seq'),%s,%s,%s)",
+                    [PARSED_SCHEMA_KEY, parsed_schema_value, "Parsed Schema"]
+                )
+            else:
+                conn.execsql(
+                    "update "+fullname+" set param_value=%s where id=%s",
+                    [parsed_schema_value, sys_parameter_id]
+                )
+
+    #@classmethod
+    #def load_parsed(cls, connectionpool: ConnectionPool) -> YASDLParseResult:
+    def load_parsed(self) -> YASDLParseResult:
         """Load the definition of a database from the database.
 
         Note: the definition must have been saved with save_parsed previously."""
-        raise NotImplementedError  # TODO: load it from the venus_core schema!
+        # TODO: make this easier! Should be a method of the instance!
+        venus_core = self.parsed.get_schema("venus.core")
+        sys_parameter = venus_core.bind("sys_parameter")
+        sname = self.get_schema_pname(sys_parameter.owner_schema)
+        tname = self.get_table_pname(sys_parameter)
+        fullname = '"%s"."%s"' % (sname, tname)
+
+        #with connectionpool.open() as conn:
+        with self.cpool.opentrans() as conn:
+            parsed_schema_value = conn.getqueryvalue(
+                "select param_value from " + fullname + " where param_key=%s",
+                [PARSED_SCHEMA_KEY]
+            )
+            if parsed_schema_value is not None:
+                return YASDLParseResult.loads(base64.b64decode(parsed_schema_value.encode('ascii')))
+

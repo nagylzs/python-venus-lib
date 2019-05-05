@@ -43,7 +43,7 @@ schema venus.core {
     #
     # Meta tables storing realized definitions of this instance.
     #
-    final required fieldset r_schema : yasdl_item {
+    required final required fieldset r_schema : yasdl_item {
         guid "257f9bc8-2fdc-4c51-a5ea-682e81edee38";
         displaylabel "Schema of this database instance";
         required field idx : types.notnullint {
@@ -55,10 +55,31 @@ schema venus.core {
         }
     }
 
-    final required fieldset r_table : yasdl_item {
-        guid "70fdd9d9-c223-48f3-9bc2-dcba5e29152c";
+    required final required fieldset r_table : yasdl_item {
+        guid "";
         displaylabel "Table of this database instance";
         required field r_schema : types.owner -> r_schema;
     }
+
+    required fieldset sys_parameter {
+        guid "b141c169-d370-40f8-a00a-384f813a4801";
+        displaylabel "System parameter";
+        required field param_key {
+            displaylabel "Key";
+            type "text";
+            reqlevel "required";
+            notnull true;
+        }
+        required field param_value {
+            displaylabel "Value";
+            type "text";
+        }
+        required field description {
+            displaylabel "Description";
+            type "text";
+        }
+        index uidx { fields param_key; unique true; }
+    }
+
 
 }
