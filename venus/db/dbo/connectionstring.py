@@ -30,7 +30,7 @@ def get_connection_factory(dbtype, connection_string):
     return db_driver.create_factory(*args, **kwargs)
 
 
-def create_asyncpool(dbtype, connstring):
+def create_asyncpool(dbtype, connstring) -> AsyncConnectionPool:
     """Create an AsyncConnectionPool for a set of parameters.
 
     Warning: for thread-safe applications, use create_pool().
@@ -43,7 +43,7 @@ def create_asyncpool(dbtype, connstring):
     return AsyncConnectionPool(get_connection_factory(dbtype, connstring))
 
 
-def create_pool(dbtype, connstring):
+def create_pool(dbtype, connstring) -> ConnectionPool:
     """Create an ConnectionPool for a set of parameters.
 
     Warning: for async applications, use create_asyncpool().
