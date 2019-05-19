@@ -1164,21 +1164,17 @@ class YASDLInstance:
                     [parsed_schema_value, sys_parameter_id]
                 )
 
-    #@classmethod
-    #def load_parsed(cls, connectionpool: ConnectionPool) -> YASDLParseResult:
-    def load_parsed(self) -> YASDLParseResult:
+    @classmethod
+    def load_parsed(cls, connectionpool: ConnectionPool) -> YASDLParseResult:
+    #def load_parsed(self) -> YASDLParseResult:
         """Load the definition of a database from the database.
 
         Note: the definition must have been saved with save_parsed previously."""
-        # TODO: make this easier! Should be a method of the instance!
-        venus_core = self.parsed.get_schema("venus.core")
-        sys_parameter = venus_core.bind("sys_parameter")
-        sname = self.get_schema_pname(sys_parameter.owner_schema)
-        tname = self.get_table_pname(sys_parameter)
-        fullname = '"%s"."%s"' % (sname, tname)
+        with connectionpool.open() as conn:
+            sname = "venus%score" % conn.name_separator
+            tname = "sys_parameter"
+            fullname = '"%s"."%s"' % (sname, tname)
 
-        #with connectionpool.open() as conn:
-        with self.cpool.opentrans() as conn:
             parsed_schema_value = conn.getqueryvalue(
                 "select param_value from " + fullname + " where param_key=%s",
                 [PARSED_SCHEMA_KEY]
