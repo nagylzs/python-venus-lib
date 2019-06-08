@@ -22,9 +22,11 @@ schema venus.core {
         }
         required field namepath : types.name {
             displaylabel "Full dotted name";
+            lookupresultindex 1;
         }
         required field pname : types.name {
             displaylabel "Physical name of the realization";
+            lookupresultindex 2;
         }
         required field src  : types.sourcecode {
             displaylabel "YASDL source code";
@@ -69,6 +71,7 @@ schema venus.core {
             type "text";
             reqlevel "required";
             notnull true;
+            lookupresultindex 1;
         }
         required field param_value {
             displaylabel "Value";
