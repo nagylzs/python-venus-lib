@@ -746,7 +746,7 @@ class YASDLField(YASDLDefinition):
 
 class YASDLFieldSet(YASDLDefinition):
     """YASDL fieldset definition object."""
-    pass
+    realized = False
 
 
 YASDLFieldPath = List[Union[YASDLFieldSet, YASDLField]]
