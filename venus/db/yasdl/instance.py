@@ -2,7 +2,7 @@
 from typing import Set, Dict, List, NamedTuple
 import base64
 
-from venus.db.dbo.connectionpool import ConnectionPool
+from venus.db.dbo.connectionpool import BaseConnectionPool
 from venus.db.yasdl import ast
 from venus.db.yasdl.parser import YASDLParseResult
 from venus.db.dbo.sqlprocessor import SQLProcessor
@@ -170,7 +170,7 @@ class YASDLInstance:
 
     """
 
-    def __init__(self, parseresult: YASDLParseResult, connectionpool: ConnectionPool):
+    def __init__(self, parseresult: YASDLParseResult, connectionpool: BaseConnectionPool):
         """Create an YASDL instance.
 
         :param parseresult: An YASDLParseResult instance, that contains a successfully compiled schema set.
@@ -200,17 +200,25 @@ class YASDLInstance:
         self._fknames = {}
         self._idxnames = {}
         self._constraintnames = {}
+        self._schema_by_pname = {}
+        self._table_by_full_pname = {}
         with self.cpool.open() as conn:
             for schema in self.parsed.iterate([ast.YASDLSchema]):
                 # Schema name
-                self._pnames[schema] = conn.makeschemaname(schema)
+                schema_pname = conn.makeschemaname(schema)
+                self._pnames[schema] = schema_pname
+                self._schema_by_pname[schema_pname] = schema
 
             # Table names and field names
             for schema, table in self.toplevel_realized_fieldsets():
                 # for schema in self.parsed.iterate([ast.YASDLSchema]):
                 #    for table in self.parsed.toplevel_fieldsets:
                 #        if table.realized and table.owner is schema:
-                self._pnames[table] = conn.maketablename(table)
+                schema_pname = self._pnames[schema]
+                table_pname = conn.maketablename(table)
+                self._pnames[table] = table_pname
+                table_full_pname = "%s.%s" % (schema_pname, table_pname)
+                self._table_by_full_pname[table_full_pname] = table
                 self._pknames[table] = conn.makepkname(table)
                 self._cache_fields_pnames(conn, schema, table)
                 self._cache_incides_pnames(conn, table)
@@ -235,7 +243,7 @@ class YASDLInstance:
             if isinstance(member, ast.YASDLConstraint):
                 self._constraintnames[(table, member)] = conn.makeconstraintname(table, member)
 
-    def get_schema_pname(self, schema):
+    def get_schema_pname(self, schema: ast.YASDLSchema) -> str:
         """Get physical name for a schema.
 
         :param schema: The schema
@@ -245,7 +253,15 @@ class YASDLInstance:
         """
         return self._pnames[schema]
 
-    def get_table_pname(self, table):
+    def get_schema_by_pname(self, schema_pname: str) -> ast.YASDLSchema:
+        """Get schema by its physical name.
+
+        :param schema_pname: physical name of the schema
+        :return: ast.YASDLSchema definition with the given physical name
+        """
+        return self._schema_by_pname[schema_pname]
+
+    def get_table_pname(self, table: ast.YASDLFieldSet) -> str:
         """Get physical name for a table.
 
         :param table: The table
@@ -258,6 +274,22 @@ class YASDLInstance:
             return self._pnames[table]
         except KeyError:
             raise NotRealizedError()
+
+    def get_table_by_full_pname(self, table_pname: str) -> ast.YASDLFieldSet:
+        """Get table (realized top level YASDLFieldSet) by its physical name.
+
+        :param table_pname: Physical name of the table. It must also contain the physical name of the schema
+            in the form of  <schema_pname>.<table_pname>
+        :return: ast.YASDLFieldSet definition with the given physical name
+        """
+        return self._table_by_full_pname[table_pname]
+
+    def table_path_to_table_full_pname(self, table_path: str) -> str:
+        """Convert table path into a full physical name."""
+        table = self.get_table_by_full_pname(table_path)
+        schema_pname = self.get_schema_pname(table.owner_schema)
+        table_pname = self.get_table_pname(table)
+        return '"%s"."%s"' % (schema_pname, table_pname)
 
     def get_table_pkname(self, table):
         """Get primary key constraint name for a table.
@@ -868,13 +900,11 @@ class YASDLInstance:
                     conn.yasdl_field_drop_not_null(instance, field_diff.old_table, fieldpath,
                                                    upgrade_context.sqlprocessor, upgrade_context.options)
 
-
         for guid in upgrade_context.table_diff.to_drop:
             old_table = upgrade_context.table_diff.old_tables[guid]
             with instance.cpool.open() as conn:
                 conn.yasdl_drop_all_field_constraints(instance, old_table,
-                                                        upgrade_context.sqlprocessor, upgrade_context.options)
-
+                                                      upgrade_context.sqlprocessor, upgrade_context.options)
 
     @classmethod
     def upgrade_drop_table_constraints(cls, upgrade_context: YASDLUpgradeContext):
@@ -890,13 +920,11 @@ class YASDLInstance:
                             instance, schema, table,
                             upgrade_context.sqlprocessor, upgrade_context.options)
 
-
         for guid in upgrade_context.table_diff.to_drop:
             old_table = upgrade_context.table_diff.old_tables[guid]
             with instance.cpool.open() as conn:
                 conn.yasdl_drop_table_constraints(instance, old_table.owner_schema, old_table,
                                                   upgrade_context.sqlprocessor, upgrade_context.options)
-
 
     @classmethod
     def upgrade_drop_indexes(cls, upgrade_context: YASDLUpgradeContext):
@@ -1020,7 +1048,6 @@ class YASDLInstance:
                 conn.yasdl_create_all_field_constraints(instance, new_table,
                                                         upgrade_context.sqlprocessor, upgrade_context.options)
 
-
     @classmethod
     def upgrade_create_indexes(cls, upgrade_context: YASDLUpgradeContext):
         """Create indexes for all tables that have any field level changes."""
@@ -1047,7 +1074,7 @@ class YASDLInstance:
                     created.add(table)
                     with new_instance.cpool.open() as conn:
                         conn.yasdl_create_table_indexes(new_instance, schema, table,
-                                                         upgrade_context.sqlprocessor, upgrade_context.options)
+                                                        upgrade_context.sqlprocessor, upgrade_context.options)
 
     @classmethod
     def upgrade_create_triggers(cls, upgrade_context: YASDLUpgradeContext):
@@ -1151,22 +1178,22 @@ class YASDLInstance:
 
         with self.cpool.opentrans() as conn:
             sys_parameter_id = conn.getqueryvalue(
-                "select id from "+fullname+" where param_key=%s", [PARSED_SCHEMA_KEY])
+                "select id from " + fullname + " where param_key=%s", [PARSED_SCHEMA_KEY])
             if sys_parameter_id is None:
                 conn.execsql(
-                    "insert into "+fullname+"(id,param_key, param_value, description) values ("
-                    "nextval('sys.id_seq'),%s,%s,%s)",
+                    "insert into " + fullname + "(id,param_key, param_value, description) values ("
+                                                "nextval('sys.id_seq'),%s,%s,%s)",
                     [PARSED_SCHEMA_KEY, parsed_schema_value, "Parsed Schema"]
                 )
             else:
                 conn.execsql(
-                    "update "+fullname+" set param_value=%s where id=%s",
+                    "update " + fullname + " set param_value=%s where id=%s",
                     [parsed_schema_value, sys_parameter_id]
                 )
 
     @classmethod
-    def load_parsed(cls, connectionpool: ConnectionPool) -> YASDLParseResult:
-    #def load_parsed(self) -> YASDLParseResult:
+    def load_parsed(cls, connectionpool: BaseConnectionPool) -> YASDLParseResult:
+        # def load_parsed(self) -> YASDLParseResult:
         """Load the definition of a database from the database.
 
         Note: the definition must have been saved with save_parsed previously."""
@@ -1181,4 +1208,3 @@ class YASDLInstance:
             )
             if parsed_schema_value is not None:
                 return YASDLParseResult.loads(base64.b64decode(parsed_schema_value.encode('ascii')))
-
