@@ -266,6 +266,10 @@ class YASDLItem:
                 return True
         return False
 
+    def __contains__(self, name):
+        """Very similar to has_member, but here you cannot specify min_classes."""
+        return name in self._mbn
+
     def __getitem__(self, name):
         return self._mbn[name]
 

@@ -297,27 +297,18 @@ class ConnectionPool(BaseConnectionPool):
 
     def borrow(self):
         """Borrow a connection for the given database name."""
-        self.lock.acquire()
-        try:
+        with self.lock:
             return BaseConnectionPool.borrow(self)
-        finally:
-            self.lock.release()
 
     def giveback(self, conn):
         """Give a connection back."""
-        self.lock.acquire()
-        try:
+        with self.lock:
             return BaseConnectionPool.giveback(self, conn)
-        finally:
-            self.lock.release()
 
     def collect(self):
         """Do garbage collection on connections in the pool."""
-        self.lock.acquire()
-        try:
-            return self.collect()
-        finally:
-            self.lock.release()
+        with self.lock:
+            return super().collect()
 
 
 if __name__ == '__main__':

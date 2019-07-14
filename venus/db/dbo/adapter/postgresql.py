@@ -101,7 +101,7 @@ class Connection(connection.Connection):
         conn2 = factory()
         """
         if kwparams:
-            kwparams = copy.copy(kwparams)
+            kwparams = copy.deepcopy(kwparams)
             if "user" not in kwparams:
                 kwparams["user"] = getpass.getuser()
             if "database" not in kwparams:
