@@ -581,7 +581,7 @@ class Connection:
         except KeyError:
             raise TypeError(
                 field.getpath() + ": " +
-                "Type '%s' is not supported by this diver." % typ)
+                "Type '%s' is not supported by this driver." % typ)
 
         if typeinfo["need_size"] and field.get_size() is None:
             raise AttributeError(

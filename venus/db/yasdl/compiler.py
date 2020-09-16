@@ -1371,7 +1371,7 @@ class Compiler:
                 typeinfo = self.dbdriver.get_typeinfo(typ)
             except KeyError:
                 self.append_error(obj["type"],
-                                  _("Type '%s' is not supported by this diver.") % typ,
+                                  _("Type '%s' is not supported by this driver.") % typ,
                                   "08011")
                 return
 

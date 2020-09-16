@@ -193,6 +193,7 @@ class Connection(connection.Connection):
         # http://www.postgresql.org/docs/9.2/static/datatype-json.html
         {"nativename": "json", },
         {"nativename": "jsonb", },
+        {"nativename": "bigint[]", "names": {"int8[]", "bigint[]"}, },
     ]
 
     # Existence methods.
