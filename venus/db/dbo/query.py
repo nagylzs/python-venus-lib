@@ -90,7 +90,7 @@ class Query:
         while True:
             self._row = self.cur.fetchone()
             if self._row is None:
-                raise StopIteration
+                return
             yield self.get_dict()
 
     def __getitem__(self, key):
