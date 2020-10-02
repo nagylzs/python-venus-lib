@@ -615,6 +615,8 @@ class Connection:
         # TODO: convert default value to SQL literal?
         defval = field.get_default()
         if defval is not None:
+            if isinstance(defval, str):
+                defval = "'%s'" % defval.replace("'", "\\'").replace("\\", "\\\\")
             res += " DEFAULT %s" % defval
         return res
 
@@ -837,7 +839,6 @@ class Connection:
             sqlproc.addbuffer("".join(content))
             sqlproc.processbuffer(options["ignore_exceptions"])
 
-
     def yasdl_create_all_field_constraints(self, instance, table, sqlproc, options):
         """Create all field level constraints for a table.
 
@@ -849,7 +850,7 @@ class Connection:
         for fieldpath in table.itercontained([ast.YASDLField]):
             field = fieldpath[-1]
             if field.realized and field.get_notnull():
-                self.yasdl_field_set_not_null(instance,  table, fieldpath, sqlproc, options)
+                self.yasdl_field_set_not_null(instance, table, fieldpath, sqlproc, options)
 
     def yasdl_create_table_comments(self, instance, schema, table, sqlproc, options):
         """Create misc things in SQL.
@@ -1010,7 +1011,7 @@ class Connection:
         for fieldpath in table.itercontained([ast.YASDLField]):
             field = fieldpath[-1]
             if field.realized and field.get_notnull():
-                self.yasdl_field_drop_not_null(instance,  table, fieldpath, sqlproc, options)
+                self.yasdl_field_drop_not_null(instance, table, fieldpath, sqlproc, options)
 
     def escape_str(self, value):
         """Escape a string.
