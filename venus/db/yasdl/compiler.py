@@ -1248,10 +1248,10 @@ class Compiler:
                 ondelete = obj["ondelete"]
                 if len(ondelete.items) != 1 or \
                         not isinstance(ondelete.items[0], str) or \
-                        (ondelete.items[0] not in ["cascade", "setnull", "noaction"]):
+                        (ondelete.items[0] not in ["cascade", "setnull", "noaction", "fail"]):
                     self.append_error(ondelete,
                                       _("Argument of 'ondelete' property must be in " +
-                                        "['cascade','setnull','noaction']"), "07123")
+                                        "['cascade','setnull','noaction', 'fail']"), "07123")
             if obj.has_member("onupdate"):
                 onupdate = obj["onupdate"]
                 if len(onupdate.items) != 1 or \

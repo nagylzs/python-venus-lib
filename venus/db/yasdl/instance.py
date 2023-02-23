@@ -701,6 +701,7 @@ class YASDLInstance:
                 to_retype = []
                 to_drop_notnull = []
                 to_create_notnull = []
+                to_change_ondelete = []
 
                 # Process fields to be upgraded
                 for pname in to_upgrade:
@@ -721,6 +722,10 @@ class YASDLInstance:
                                 to_drop_notnull.append(old_upg_fieldpath)
                             if not old_notnull and new_notnull:
                                 to_create_notnull.append(new_upg_fieldpath)
+                            old_ondelete = old_field.get_ondelete()
+                            new_ondelete = new_field.get_ondelete()
+                            if old_ondelete != new_ondelete:
+                                to_change_ondelete.append(new_upg_fieldpath)
 
                 # Process fields to be added
                 for pname in to_create:
@@ -739,7 +744,8 @@ class YASDLInstance:
                         to_drop_notnull.append(old_upg_fieldpath)
 
                 has_change = bool(
-                    to_drop_paths or to_create_paths or to_rename or to_retype or to_drop_notnull or to_create_notnull)
+                    to_drop_paths or to_create_paths or to_rename or to_retype or to_drop_notnull or to_create_notnull
+                    or to_change_ondelete)
                 result.append(YASDLFieldDiffResult(table_diff.old_instance, table_diff.new_instance,
                                                    old_table, new_table,
                                                    to_drop_paths, to_create_paths,

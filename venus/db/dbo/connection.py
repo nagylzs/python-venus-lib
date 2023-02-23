@@ -798,7 +798,8 @@ class Connection:
                     (sname, tname, fkname))
 
                 ondelete = field.get_singleprop("ondelete", "noaction").lower()
-                ondelete_kind = {"cascade": "CASCADE", "noaction": "NO ACTION", "setnull": "SET NULL"}.get(ondelete)
+                ondelete_kind = {"cascade": "CASCADE", "noaction": "NO ACTION", "setnull": "SET NULL",
+                                 "fail": "NO ACTION"}.get(ondelete)
                 ondelete_clause = "ON DELETE %s" % ondelete_kind
 
                 deferrable = field.get_singleprop("deferrable", True)
