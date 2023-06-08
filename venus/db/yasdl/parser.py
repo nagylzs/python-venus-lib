@@ -6,11 +6,14 @@ import re
 import sys
 import gzip
 import io
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
 
 import pickle
+import uuid
+import warnings
 
 import venus.i18n
 from venus.db.yasdl import ast
@@ -163,6 +166,8 @@ class YASDLParseResult:
         else:
             return self.locate_local(name, search_path)
 
+    _fake_src_dir = None
+
     @classmethod
     def locate_local(cls, name, search_path):
         """Locate local schema source (file).
@@ -177,6 +182,7 @@ class YASDLParseResult:
 
         If cannot be found, an exception is raised.
         """
+        global _fake_src_dir  # HACK!
         name = name.replace('.', os.sep)
         for dpath in search_path:
             fpath = os.path.join(dpath, name) + ".yasdl"
@@ -187,6 +193,20 @@ class YASDLParseResult:
                 if sys.platform == "win32":
                     res = res.lower()
                 return res
+        # Create temp file
+        if not cls._fake_src_dir:
+            _fake_src_dir = tempfile.mkdtemp()
+        fpath = os.path.abspath(os.path.join(_fake_src_dir, name + ".yasdl"))
+        if not os.path.isfile(fpath):
+            warnings.warn("Creating fake empty schema %s at %s" % (name, fpath))
+            with open(fpath, "w") as fout:
+                fout.write("""
+        schema %s {
+            language "hu";
+            guid "%s";
+        }
+        """ % (name, str(uuid.uuid4())))
+        return fpath
         raise YASDLSchemaLocationError(_("Schema %s cannot be located. Search path=%s") % (repr(name), search_path))
 
     @classmethod
@@ -222,8 +242,8 @@ class YASDLParseResult:
             else:
                 if not fpath.endswith('.yasdl'):
                     raise Exception(
-                            _("Invalid fpath to import (%s).") % repr(fpath) + \
-                            " " + _("Must be an URI or a .yasdl file path."))
+                        _("Invalid fpath to import (%s).") % repr(fpath) + \
+                        " " + _("Must be an URI or a .yasdl file path."))
                 name = fpath.replace(os.sep, '.')[:-len(".yasdl")]
                 # search_path = copy.copy(search_path)
                 # fpath = os.path.abspath(fpath)
@@ -249,11 +269,11 @@ class YASDLParseResult:
                         # First we tokenize. So there is a lexer error
                         # then we can raise a proper exception.
                         schema = self.schemas[src] = self.parse_str(
-                                src, data, search_path)
+                            src, data, search_path)
                     else:
                         self.debug("parse_file:%s" % src)
                         schema = self.schemas[src] = self.parse_file(
-                                src, search_path)
+                            src, search_path)
                     schema.use_stack = use_stack
                     schema.src = src
                     new_schemas.append(schema)
@@ -262,7 +282,7 @@ class YASDLParseResult:
                 for use in schema.uses:
                     try:
                         src = self.locate_used_schema(
-                                use.name, schema.search_path)
+                            use.name, schema.search_path)
                     except YASDLSchemaLocationError as e:
                         # Re-raise with the correct source file reference.
                         raise YASDLSchemaLocationError('"%s": %s' % (schema.getsourcefile(), str(e)))
@@ -474,8 +494,8 @@ class YASDLParseResult:
                 if name.startswith(prefix):
                     subname = name[len(prefix) + 1:]
                     result = use.schema.bind_static(
-                            subname, name.min_classes,
-                            recursive=recursive, excludes=excludes)
+                        subname, name.min_classes,
+                        recursive=recursive, excludes=excludes)
                     if result:
                         return result
 
@@ -486,8 +506,8 @@ class YASDLParseResult:
                     subname = name[len(schema.package_name) + 1:]
                     # print "search",schema.getdebugpath()
                     result = schema.bind_static(
-                            subname, name.min_classes,
-                            recursive=recursive, excludes=excludes)
+                        subname, name.min_classes,
+                        recursive=recursive, excludes=excludes)
                     if result:
                         return result
 
