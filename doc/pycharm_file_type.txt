@@ -24,14 +24,10 @@ require
 required
 schema
 use
+check
+unique
 
 keywords/2
-
-false
-none
-true
-
-keywords/3
 
 displaylabel
 guid
@@ -39,6 +35,18 @@ hint
 language
 ondelete
 type
+lookupresultindex
+cache
+default
+
+
+keywords/3
+
+false
+none
+true
+
+
 
 keywords/4
 
@@ -48,4 +56,3 @@ delindexes
 fields
 implements
 references
-unique
