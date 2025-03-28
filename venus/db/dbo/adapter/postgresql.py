@@ -195,6 +195,7 @@ class Connection(connection.Connection):
         {"nativename": "jsonb", },
         {"nativename": "bigint[]", "names": {"int8[]", "bigint[]"}, },
         {"nativename": "_int2", "names": {"int2[]", "_int2"}, },
+        {"nativename": "vector", "names": {"vector"}, "need_size": True},
     ]
 
     # Existence methods.
