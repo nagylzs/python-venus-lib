@@ -1,0 +1,11 @@
+{
+	// Applied to every file opened with the YASDL syntax.
+	"tab_size": 4,
+	"translate_tabs_to_spaces": true,
+	"trim_trailing_white_space_on_save": true,
+	"ensure_newline_at_eof_on_save": true,
+	// Makes it obvious which "{" the caret's "}" belongs to.
+	"match_brackets": true,
+	"match_brackets_content": true,
+	"match_brackets_braces": true
+}

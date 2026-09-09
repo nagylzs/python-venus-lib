@@ -1,0 +1,394 @@
+%YAML 1.2
+---
+# Sublime Text 4 syntax definition for YASDL (Yet Another Schema Definition Language).
+#
+# Derived directly from venus/db/yasdl/lex.py (tokens) and
+# venus/db/yasdl/yacc.py (grammar rules).
+#
+# Installation: see README.md next to this file.
+name: YASDL
+file_extensions:
+  - yasdl
+scope: source.yasdl
+first_line_match: '^\s*schema\s+[A-Za-z_]'
+
+variables:
+  # t_name: r'[a-zA-Z_][a-zA-Z_0-9]*'
+  ident: '[A-Za-z_][A-Za-z_0-9]*'
+  # dotted_name / simple_dotted_name
+  dotted: '{{ident}}(?:\s*\.\s*{{ident}})*'
+  # lex.RESERVED_PROPERTY_NAMES - property names with a special meaning
+  # for the compiler ("fields" is handled separately, it is a real keyword).
+  special_property: 'ancestors|implements|references|unique|delindexes|cluster'
+  # Properties that are inherited/type related: their values are definition
+  # references, not plain values.
+  typeref_property: 'ancestors|implements|references'
+  # Well known (built-in) property names understood by the compiler and by
+  # the database adapters. Purely cosmetic: unknown property names are still
+  # highlighted, just with a different scope.
+  known_property: |-
+    (?x:
+        type|guid|language|author|version|description|hint
+      | label|displaylabel|longlabel|shortlabel
+      | notnull|immutable|default|check|force|cache
+      | ondelete|onupdate|on_delete|on_update
+      | reqlevel|requirelevel|size|precision
+      | lookupresultindex|lookupsearchfields|ignore_exceptions
+      | hidecrud|journaled|transitivekey|view
+    )
+
+contexts:
+  prototype:
+    - include: comments
+
+  main:
+    - include: statements
+    # A closing brace with nothing open can only be a typo.
+    - match: '\}'
+      scope: invalid.illegal.stray-brace.yasdl
+
+###############################################################################
+# Comments
+###############################################################################
+
+  comments:
+    - match: '#'
+      scope: punctuation.definition.comment.yasdl
+      push:
+        - meta_scope: comment.line.number-sign.yasdl
+        - match: '$'
+          pop: true
+
+###############################################################################
+# Statements
+#
+# Every context that lists statements is entered only at statement boundaries
+# (right after "{", "}" or ";"), so a bare identifier here is always a
+# property name.
+###############################################################################
+
+  statements:
+    - include: schema-declaration
+    - include: use-declaration
+    - include: delete-statement
+    - include: modifiers
+    - include: field-declaration
+    - include: fieldset-declaration
+    - include: index-declaration
+    - include: fields-property
+    - include: orphan-keywords
+    - include: property-declaration
+    - include: literals
+    # An unexpected "{" still opens a block, so brace matching stays sane.
+    - match: '\{'
+      scope: punctuation.section.block.begin.yasdl
+      push: block-body
+    - match: ';'
+      scope: punctuation.terminator.yasdl
+
+  block-body:
+    - meta_scope: meta.block.yasdl
+    - match: '\}'
+      scope: punctuation.section.block.end.yasdl
+      pop: true
+    - include: statements
+
+  # Waits for the "{ ... }" (or ";") that belongs to a declaration header.
+  block-expected:
+    - match: '\{'
+      scope: punctuation.section.block.begin.yasdl
+      set: block-body
+    - match: ';'
+      scope: punctuation.terminator.yasdl
+      pop: true
+    - match: '(?=\S)'
+      pop: true
+
+###############################################################################
+# schema <dotted.name> { ... }
+###############################################################################
+
+  schema-declaration:
+    - match: '\b(schema)\s+({{dotted}})'
+      captures:
+        1: storage.type.schema.yasdl
+        2: entity.name.namespace.schema.yasdl
+      push: block-expected
+
+###############################################################################
+# use|require <name|"uri"> [as <alias>] ;
+###############################################################################
+
+  use-declaration:
+    - match: '\b(use|require)\b'
+      scope: keyword.control.import.yasdl
+      push:
+        - meta_scope: meta.import.yasdl
+        - match: ';'
+          scope: punctuation.terminator.yasdl
+          pop: true
+        - match: '\b(as)\s+({{ident}})'
+          captures:
+            1: keyword.control.import.yasdl
+            2: entity.name.namespace.alias.yasdl
+        - match: '\b(as)\b'
+          scope: keyword.control.import.yasdl
+        - include: strings
+        - match: '{{dotted}}'
+          scope: entity.name.namespace.import.yasdl
+        - match: '(?=[{}])'
+          pop: true
+
+###############################################################################
+# delete <name> ;   /   rename <name> ...
+###############################################################################
+
+  delete-statement:
+    - match: '\b(delete|rename)\s+({{ident}})'
+      captures:
+        1: keyword.control.yasdl
+        2: variable.other.member.yasdl
+
+###############################################################################
+# abstract / final / required
+###############################################################################
+
+  modifiers:
+    - match: '\b(?:abstract|final|required)\b'
+      scope: storage.modifier.yasdl
+
+###############################################################################
+# field <name> [: ancestors] [-> reference] { ... } | ;
+###############################################################################
+
+  field-declaration:
+    - match: '\b(field)\s+({{ident}})'
+      captures:
+        1: storage.type.field.yasdl
+        2: entity.name.field.yasdl
+      push: definition-header
+
+  fieldset-declaration:
+    - match: '\b(fieldset)\s+({{ident}})'
+      captures:
+        1: storage.type.fieldset.yasdl
+        2: entity.name.class.yasdl
+      push: definition-header
+
+  index-declaration:
+    - match: '\b(index|constraint)\s+({{ident}})'
+      captures:
+        1: storage.type.index.yasdl
+        2: entity.name.index.yasdl
+      push: definition-header
+
+  definition-header:
+    - meta_scope: meta.declaration.yasdl
+    - match: ':'
+      scope: punctuation.separator.type.yasdl
+      push: typedef-list
+    - match: '->'
+      scope: keyword.operator.reference.yasdl
+      push: reference-target
+    - match: '\{'
+      scope: punctuation.section.block.begin.yasdl
+      set: block-body
+    - match: ';'
+      scope: punctuation.terminator.yasdl
+      pop: true
+    - match: '(?=[}])'
+      pop: true
+    - include: min-classes
+    - match: '(?=\S)'
+      pop: true
+
+  # ": a.b c.d" - the list of ancestors of a field/fieldset.
+  typedef-list:
+    - meta_scope: meta.typedef.yasdl
+    - match: '(?=[;{}]|->)'
+      pop: true
+    - match: '='
+      scope: keyword.operator.implements.yasdl
+    - include: min-classes
+    - match: '(?:\b(schema)\s*(\.)\s*)?({{dotted}})'
+      captures:
+        1: keyword.other.absolute.yasdl
+        2: punctuation.accessor.dot.yasdl
+        3: entity.other.inherited-class.yasdl
+    - match: '(?=\S)'
+      pop: true
+
+  # "-> a.b" - the target of a reference field.
+  reference-target:
+    - meta_scope: meta.reference.yasdl
+    - match: '(?=[;{}])'
+      pop: true
+    - match: '='
+      scope: keyword.operator.implements.yasdl
+    - include: min-classes
+    - match: '(?:\b(schema)\s*(\.)\s*)?({{dotted}})'
+      captures:
+        1: keyword.other.absolute.yasdl
+        2: punctuation.accessor.dot.yasdl
+        3: support.class.reference.yasdl
+    - match: '(?=\S)'
+      pop: true
+
+  # "[schema fieldset field index property]" - minimum class restriction.
+  min-classes:
+    - match: '\['
+      scope: punctuation.section.brackets.begin.yasdl
+      push:
+        - meta_scope: meta.min-classes.yasdl
+        - match: '\]'
+          scope: punctuation.section.brackets.end.yasdl
+          pop: true
+        - match: '\b(?:schema|fieldset|field|index|property)\b'
+          scope: storage.type.class.yasdl
+        - match: '(?=[;{}])'
+          pop: true
+        - match: '[^\s\]]+'
+          scope: invalid.illegal.min-class.yasdl
+
+###############################################################################
+# Properties
+###############################################################################
+
+  # "fields +a.b -c ;" - the field list of an index.
+  fields-property:
+    - match: '\b(fields)\b'
+      scope: keyword.other.property.yasdl
+      push:
+        - meta_scope: meta.property.fields.yasdl
+        - match: ';'
+          scope: punctuation.terminator.yasdl
+          pop: true
+        - match: '[-+]'
+          scope: keyword.operator.sort.yasdl
+        - include: min-classes
+        - match: '(?:\b(schema)\s*(\.)\s*)?({{dotted}})'
+          captures:
+            1: keyword.other.absolute.yasdl
+            2: punctuation.accessor.dot.yasdl
+            3: variable.other.member.yasdl
+        - match: '(?=[{}])'
+          pop: true
+
+  property-declaration:
+    # ancestors / implements / references: values are definition references.
+    - match: '\b({{typeref_property}})\b'
+      scope: keyword.other.property.yasdl
+      push: property-values-typeref
+    # Other properties with a special meaning for the compiler.
+    - match: '\b({{special_property}})\b'
+      scope: keyword.other.property.yasdl
+      push: property-values
+    # Well known built-in properties.
+    - match: '\b{{known_property}}\b'
+      scope: support.type.property.yasdl
+      push: property-values
+    # Anything else is a user defined property.
+    - match: '\b{{ident}}\b'
+      scope: variable.other.member.property.yasdl
+      push: property-values
+
+  property-values:
+    - meta_scope: meta.property.yasdl
+    - match: ';'
+      scope: punctuation.terminator.yasdl
+      pop: true
+    - include: literals
+    - match: '='
+      scope: keyword.operator.implements.yasdl
+    - include: min-classes
+    - match: '(?:\b(schema)\s*(\.)\s*)?({{dotted}})'
+      captures:
+        1: keyword.other.absolute.yasdl
+        2: punctuation.accessor.dot.yasdl
+        3: variable.other.yasdl
+    - match: '(?=[{}])'
+      pop: true
+
+  property-values-typeref:
+    - meta_scope: meta.property.yasdl
+    - match: ';'
+      scope: punctuation.terminator.yasdl
+      pop: true
+    - include: literals
+    - match: '='
+      scope: keyword.operator.implements.yasdl
+    - include: min-classes
+    - match: '(?:\b(schema)\s*(\.)\s*)?({{dotted}})'
+      captures:
+        1: keyword.other.absolute.yasdl
+        2: punctuation.accessor.dot.yasdl
+        3: entity.other.inherited-class.yasdl
+    - match: '(?=[{}])'
+      pop: true
+
+  # Keywords that did not fit any of the patterns above (usually a typo, but
+  # they should still look like keywords).
+  orphan-keywords:
+    - match: '\b(?:schema|fieldset|field|index|constraint)\b'
+      scope: storage.type.yasdl
+    - match: '\b(?:use|require|as|delete|rename)\b'
+      scope: keyword.control.yasdl
+
+###############################################################################
+# Literals
+###############################################################################
+
+  literals:
+    - include: strings
+    - include: numbers
+    - include: constants
+
+  constants:
+    - match: '\b(?i:none)\b'
+      scope: constant.language.none.yasdl
+    - match: '\b(?i:true|false)\b'
+      scope: constant.language.boolean.yasdl
+    - match: '\b(?i:all)\b'
+      scope: constant.language.all.yasdl
+
+  numbers:
+    # t_FLOAT
+    - match: '[-+]?(?:(?:\d*\.\d+|\d+\.\d*)(?:[Ee][-+]?\d+)?|\d+[Ee][-+]?\d+)'
+      scope: constant.numeric.float.yasdl
+    # t_INT
+    - match: '[-+]?\d+'
+      scope: constant.numeric.integer.yasdl
+
+  strings:
+    # The lexer uses non-DOTALL regexes, so triple quoted strings cannot
+    # span multiple lines either.
+    - match: "'''.*?'''"
+      scope: string.quoted.single.block.yasdl
+    - match: '""".*?"""'
+      scope: string.quoted.double.block.yasdl
+    - match: "'"
+      scope: punctuation.definition.string.begin.yasdl
+      push:
+        - meta_scope: string.quoted.single.yasdl
+        - meta_include_prototype: false
+        - match: '\\.'
+          scope: constant.character.escape.yasdl
+        - match: "'"
+          scope: punctuation.definition.string.end.yasdl
+          pop: true
+        - match: '$'
+          scope: invalid.illegal.unclosed-string.yasdl
+          pop: true
+    - match: '"'
+      scope: punctuation.definition.string.begin.yasdl
+      push:
+        - meta_scope: string.quoted.double.yasdl
+        - meta_include_prototype: false
+        - match: '\\.'
+          scope: constant.character.escape.yasdl
+        - match: '"'
+          scope: punctuation.definition.string.end.yasdl
+          pop: true
+        - match: '$'
+          scope: invalid.illegal.unclosed-string.yasdl
+          pop: true
