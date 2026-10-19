@@ -1,15 +1,38 @@
-"""PostgreSQL database adapter package.
+"""Oracle database adapter package.
 
-Uses the psycopg2 extension."""
+Uses python-oracledb (the successor of cx_Oracle)."""
 import copy
 import getpass
 import os
 import re
 import sys
 
-import cx_Oracle
+import oracledb
 
 from venus.db.dbo import connection
+
+# Positional parameters of create_factory, in the order of cx_Oracle.connect(user, password, dsn).
+# oracledb.connect() accepts only dsn as a positional parameter.
+_POSITIONAL_PARAMS = ("user", "password", "dsn")
+# cx_Oracle only parameters, python-oracledb always uses UTF-8.
+_DESUPPORTED_PARAMS = ("encoding", "nencoding")
+
+_client_mode_initialized = False
+
+
+def _init_client_mode():
+    """Select thin or thick mode before the first connection.
+
+    python-oracledb runs in thin mode by default: it does not need the Oracle Instant Client, but it needs
+    Oracle Database 12.1 or later. Set the VENUS_ORACLE_THICK environment variable to 1 to use thick mode
+    instead (it loads the Oracle Instant Client from the system library path, e.g. LD_LIBRARY_PATH).
+    """
+    global _client_mode_initialized
+    if _client_mode_initialized:
+        return
+    if os.environ.get("VENUS_ORACLE_THICK", "").lower() in ("1", "true", "yes"):
+        oracledb.init_oracle_client()
+    _client_mode_initialized = True
 
 
 class Connection(connection.Connection):
@@ -21,13 +44,25 @@ class Connection(connection.Connection):
 
         When called, it returns a new Connection instance.
 
-        For arguments, see https://cx-oracle.readthedocs.io/en/latest/user_guide/connection_handling.html
+        Positional parameters are user, password and dsn, like in cx_Oracle.connect(). For keyword parameters, see
+        https://python-oracledb.readthedocs.io/en/latest/api_manual/module.html#oracledb.connect
 
         """
+        if len(params) > len(_POSITIONAL_PARAMS):
+            raise TypeError("create_factory() takes at most %d positional parameters (%s)" % (
+                len(_POSITIONAL_PARAMS), ", ".join(_POSITIONAL_PARAMS)))
+        kwparams = dict(kwparams)
+        for name, value in zip(_POSITIONAL_PARAMS, params):
+            if name in kwparams:
+                raise TypeError("create_factory() got multiple values for parameter %r" % name)
+            kwparams[name] = value
+        for name in _DESUPPORTED_PARAMS:
+            kwparams.pop(name, None)
+        _init_client_mode()
 
         def factory():
-            lowlevel = cx_Oracle.connect(*params, **kwparams)
-            conn = cls(cx_Oracle, lowlevel)
+            lowlevel = oracledb.connect(**kwparams)
+            conn = cls(oracledb, lowlevel)
             trans_id = conn.starttransaction()
             conn.execsql("set transaction isolation level read committed")
             conn.committransaction(trans_id)
@@ -142,5 +177,5 @@ connection.DATABASE_DRIVERS["oracle"] = Connection
 
 if __name__ == '__main__':
     test_factory = Connection.create_factory(
-        "my_user", "my_password", "my_host:1521/db_name", encoding="UTF-8")
+        "my_user", "my_password", "my_host:1521/db_name")
     print(test_factory())
